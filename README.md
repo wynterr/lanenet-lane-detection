@@ -7,7 +7,7 @@ and instance semantic segmentation using discriminative loss function for real t
 The main network architecture is as follows:
 
 `Network Architecture`
-![NetWork_Architecture](/data/source_image/network_architecture.png)
+![NetWork_Architecture](./data/source_image/network_architecture.png)
 
 ## Installation
 This software has only been tested on ubuntu 16.04(x64), python3.5, cuda-9.0, cudnn-7.0 with a GTX-1070 GPU. 
@@ -30,43 +30,42 @@ download the model and put them in folder model/tusimple_lanenet/
 You can test a single image on the trained model as follows
 
 ```
-python tools/test_lanenet.py --is_batch False --batch_size 1 
---weights_path path/to/your/model_weights_file 
---image_path data/tusimple_test_image/0.jpg
+python tools/test_lanenet.py --weights_path ./model/tusimple_lanenet_vgg/tusimple_lanenet_vgg.ckpt 
+--image_path ./data/tusimple_test_image/0.jpg
 ```
 The results are as follows:
 
 `Test Input Image`
 
-![Test Input](/data/tusimple_test_image/0.jpg)
+![Test Input](./data/tusimple_test_image/0.jpg)
 
 `Test Lane Mask Image`
 
-![Test Lane_Mask](/data/source_image/lanenet_mask_result.png)
+![Test Lane_Mask](./data/source_image/lanenet_mask_result.png)
 
 `Test Lane Binary Segmentation Image`
 
-![Test Lane_Binary_Seg](/data/source_image/lanenet_binary_seg.png)
+![Test Lane_Binary_Seg](./data/source_image/lanenet_binary_seg.png)
 
 `Test Lane Instance Segmentation Image`
 
-![Test Lane_Instance_Seg](/data/source_image/lanenet_instance_seg.png)
+![Test Lane_Instance_Seg](./data/source_image/lanenet_instance_seg.png)
 
-`Test Lane Instance Embedding Image`
-
-![Test Lane_Embedding](/data/source_image/lanenet_embedding.png)
-
-If you want to test the model on a whole dataset you may call
+If you want to evaluate the model on the whole tusimple test dataset you may call
 ```
-python tools/test_lanenet.py --is_batch True --batch_size 2 --save_dir data/tusimple_test_image/ret 
---weights_path path/to/your/model_weights_file 
---image_path data/tusimple_test_image/
+python tools/evaluate_lanenet_on_tusimple.py 
+--image_dir ROOT_DIR/TUSIMPLE_DATASET/test_set/clips 
+--weights_path ./model/tusimple_lanenet_vgg/tusimple_lanenet.ckpt 
+--save_dir ROOT_DIR/TUSIMPLE_DATASET/test_set/test_output
 ```
-If you set the save_dir argument the result will be saved in that folder or the result will not be saved but be 
-displayed during the inference process holding on 3 seconds per image. I test the model on the whole tusimple lane 
+If you set the save_dir argument the result will be saved in that folder 
+or the result will not be saved but be 
+displayed during the inference process holding on 3 seconds per image. 
+I test the model on the whole tusimple lane 
 detection dataset and make it a video. You may catch a glimpse of it bellow.
+
 `Tusimple test dataset gif`
-![tusimple_batch_test_gif](/data/source_image/lanenet_batch_test.gif)
+![tusimple_batch_test_gif](./data/source_image/lanenet_batch_test.gif)
 
 ## Train your own model
 #### Data Preparation
@@ -79,37 +78,51 @@ instance use different pixel value to represent different lane field and 0 for t
 
 All your training image will be scaled into the same scale according to the config file.
 
+Use the script here to generate the tensorflow records file
+
+```
+python data_provider/lanenet_data_feed_pipline.py 
+--dataset_dir ./data/training_data_example
+--save_dir ./data/training_data_example/tfrecords
+```
+
 #### Train model
-In my experiment the training epochs are 200000, batch size is 8, initialized learning rate is 0.0005 and decrease by 
-multiply 0.1 every 100000 epochs. About training parameters you can check the global_configuration/config.py for details. 
+In my experiment the training epochs are 80010, batch size is 4, initialized learning rate is 0.001 and use polynomial 
+decay with power 0.9. About training parameters you can check the global_configuration/config.py for details. 
 You can switch --net argument to change the base encoder stage. If you choose --net vgg then the vgg16 will be used as 
-the base encoder stage and a pretrained parameters will be loaded and if you choose --net dense then the dense net will 
-be used as the base encoder stage instead and no pretrained parameters will be loaded. And you can modified the training 
+the base encoder stage and a pretrained parameters will be loaded. And you can modified the training 
 script to load your own pretrained parameters or you can implement your own base encoder stage. 
 You may call the following script to train your own model
 
 ```
-python tools/train_lanenet.py --net vgg --dataset_dir data/training_data_example/
+python tools/train_lanenet.py 
+--net vgg 
+--dataset_dir ./data/training_data_example
+-m 0
 ```
 You can also continue the training process from the snapshot by
 ```
-python tools/train_lanenet.py --net vgg --dataset_dir data/training_data_example/ --weights_path path/to/your/last/checkpoint
+python tools/train_lanenet.py 
+--net vgg 
+--dataset_dir data/training_data_example/ 
+--weights_path path/to/your/last/checkpoint
+-m 0
 ```
 
 You may monitor the training process using tensorboard tools
 
 During my experiment the `Total loss` drops as follows:  
-![Training loss](/data/source_image/total_loss.png)
+![Training loss](./data/source_image/total_loss.png)
 
 The `Binary Segmentation loss` drops as follows:  
-![Training binary_seg_loss](/data/source_image/binary_seg_loss.png)
+![Training binary_seg_loss](./data/source_image/binary_seg_loss.png)
 
 The `Instance Segmentation loss` drops as follows:  
-![Training instance_seg_loss](/data/source_image/instance_seg_loss.png)
+![Training instance_seg_loss](./data/source_image/instance_seg_loss.png)
 
 ## Experiment
 The accuracy during training process rises as follows: 
-![Training accuracy](/data/source_image/accuracy.png)
+![Training accuracy](./data/source_image/accuracy.png)
 
 Please cite my repo [lanenet-lane-detection](https://github.com/MaybeShewill-CV/lanenet-lane-detection) if you use it.
 
@@ -154,9 +167,14 @@ need to select several lines from the train.txt to generate your own
 val.txt file. In order to obtain the test images you can modify the 
 script on your own.
 
+## Recently updates 2019.05.16
+
+New model weights can be found [here](https://www.dropbox.com/sh/tnsf0lw6psszvy4/AAA81r53jpUI3wLsRW6TiPCya?dl=0)
+
+
 ## TODO
 - [x] Add a embedding visualization tools to visualize the embedding feature map
 - [x] Add detailed explanation of training the components of lanenet separately.
 - [x] Training the model on different dataset
 - ~~[ ] Adjust the lanenet hnet model and merge the hnet model to the main lanenet model~~
-- [ ] Change the normalization function from BN to GN
+- ~~[ ] Change the normalization function from BN to GN~~
